@@ -1,6 +1,6 @@
 import requests
 import json
-import psycopg2
+import psycopg
 import openai
 import os
 from time import sleep
@@ -74,7 +74,7 @@ def load_books_to_db():
     sleep(5)
 
     # Database connection
-    conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+    conn = psycopg.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
 
     # Fetch books

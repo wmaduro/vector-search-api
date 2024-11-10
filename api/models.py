@@ -11,5 +11,5 @@ class Item(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    item_data = Column(JSONB)  # 'metadata' is a reserved word in SQLAlchemy
+    item_data = Column(JSONB)
     embedding = Column(ARRAY(Float(precision=6)))  # Array of floats

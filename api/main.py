@@ -2,11 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List
+from database import get_db
+import schemas
 import openai
-
-
-from . import models, schemas
-from .database import get_db, engine
 
 
 app = FastAPI(title="Vector Search API")

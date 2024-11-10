@@ -30,6 +30,5 @@ Visit http://localhost:8000/docs for the Swagger UI.
 
 ## Development
 - Update database schema: Edit `postgres/schema.sql`
-- Modify API: Edit files in `api/app/`
 - Add data: Use `scripts/load_data.py`
-
+- Modify API: Edit files in `api/`

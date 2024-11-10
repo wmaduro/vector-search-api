@@ -14,7 +14,8 @@ services:
 
   data_loader:
     build:
-      context: ./scripts
+      context: .
+      dockerfile: scripts/Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -23,11 +24,13 @@ services:
     command: python load_data.py
 
   api:
-    build: ./api
+    build:
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
+      - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./api:/app
