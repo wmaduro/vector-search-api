@@ -8,7 +8,7 @@ A FastAPI application implementing vector similarity search.
 
 This project demonstrates how to build a vector similarity search system using:
 - PostgreSQL with pgvector extension for vector operations
-- OpenAI Embedding models for text vectorization
+- OpenAI/Ollama Embedding models for text vectorization
 - FastAPI for the REST API interface
 - Docker for containerization
 
