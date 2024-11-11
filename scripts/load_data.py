@@ -1,8 +1,9 @@
-import requests
+import os
 import json
+import requests
 import psycopg
 import openai
-import os
+import ollama
 from time import sleep
 from dotenv import load_dotenv
 
@@ -12,40 +13,55 @@ load_dotenv()
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
 def get_embedding(text: str):
-    """Generate embedding using OpenAI API"""
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=text
-    )
+    """Generate embedding using OpenAI API."""
+    response = client.embeddings.create(model="text-embedding-3-small", input=text)
     return response.data[0].embedding
 
+
+def setup_model():
+    """Pull the nomic-embed-text model via Ollama API."""
+    response = requests.post(
+        "http://ollama-service:11434/api/pull", json={"name": "nomic-embed-text"}
+    )
+    if response.status_code == 200:
+        print("Model pull initiated successfully.")
+        return True
+    elif response.status_code == 409:  # Already exists
+        print("Model already pulled.")
+        return True
+
+    print(f"Model setup failed with status code: {response.status_code}")
+    return False
+
+
+def get_embedding_ollama(text: str):
+    """Generate embedding using Ollama API."""
+    response = ollama.embed(model="nomic-embed-text", input=text)
+    embeddings = response["embeddings"][0]
+    vector_str = f"[{','.join(map(str, embeddings))}]"
+    return vector_str
+
+
 def fetch_books():
-    """Fetch 100 books from Open Library"""
-
+    """Fetch books across various subjects from Open Library."""
     categories = [
-        'programming',
-        'web_development',
-        'artificial_intelligence',
-        'computer_science',
-        'software_engineering'
+        "programming",
+        "web_development",
+        "artificial_intelligence",
+        "computer_science",
+        "software_engineering",
     ]
-
     all_books = []
 
     for category in categories:
-        # Request API
-        url = f"https://openlibrary.org/subjects/{category}.json?limit=20"
+        url = f"https://openlibrary.org/subjects/{category}.json?limit=10"
         response = requests.get(url)
         response.raise_for_status()  # Raises an error for a bad response
 
         data = response.json()
         books = data.get("works", [])
-
-        # Check if books were fetched
-        if not books:
-            print(f"No books found for category '{category}'")
-            continue
 
         # Format each book
         for book in books:
@@ -58,7 +74,6 @@ def fetch_books():
                 "first_publish_year": book.get("first_publish_year", "Unknown"),
                 "subject": category,
             }
-
             all_books.append(book_data)
 
         print(f"Successfully processed {len(books)} books for {category}")
@@ -68,45 +83,49 @@ def fetch_books():
 
     return all_books
 
+
 def load_books_to_db():
-    """Load books with embeddings into PostgreSQL"""
-    # Wait for database to be ready
+    """Load books with embeddings into PostgreSQL."""
+
+    # Wait for the database to be ready
     sleep(5)
 
-    # Database connection
+    # Pull a embedding model from Ollama
+    if not setup_model():
+        exit(1)
+
+    # Connect to the database
     conn = psycopg.connect(os.getenv("DATABASE_URL"))
     cur = conn.cursor()
 
-    # Fetch books
+    # Fetch data from the Open Library
     books = fetch_books()
 
-    # Insert each book
     for book in books:
-        # Create description for embedding
-        description = f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
-        description += f"Published in {book['first_publish_year']}. "
-        description += f"This is a book about {book['subject']}."
+        description = (
+            f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
+            f"Published in {book['first_publish_year']}. "
+            f"This is a book about {book['subject']}."
+        )
 
         # Generate embedding
-        embedding = get_embedding(description)
+        # embedding = "[" + ",".join(["0"] * 1536) + "]"        # Placeholder embedding
+        embedding = get_embedding(description)  # OpenAI
+        embedding_ollama = get_embedding_ollama(description)  # Ollama
 
-        # Insert into database
         cur.execute(
             """
-            INSERT INTO items (name, item_data, embedding)
-            VALUES (%s, %s, %s)
+            INSERT INTO items (name, item_data, embedding, embedding_ollama)
+            VALUES (%s, %s, %s, %s)
             """,
-            (
-                book["title"],
-                json.dumps(book),
-                embedding
-            )
+            (book["title"], json.dumps(book), embedding, embedding_ollama),
         )
 
     # Commit and close
     conn.commit()
     cur.close()
     conn.close()
+
 
 if __name__ == "__main__":
     try:

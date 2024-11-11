@@ -12,6 +12,14 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
   data_loader:
     build:
       context: .
@@ -19,8 +27,10 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_HOST=http://ollama-service:11434
     depends_on:
       - db
+      - ollama
     command: python load_data.py
 
   api:
@@ -32,10 +42,13 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OLLAMA_HOST=http://ollama-service:11434
     volumes:
       - ./api:/app
     depends_on:
       - db
+      - ollama
 
 volumes:
   pgdata:
+  ollama_data:

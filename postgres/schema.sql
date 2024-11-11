@@ -6,5 +6,6 @@ CREATE TABLE items (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     item_data JSONB,
-    embedding vector(1536) -- vector data
+    embedding vector(1536),       -- OpenAI
+    embedding_ollama vector(768)  -- Ollama
 );
