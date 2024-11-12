@@ -12,4 +12,5 @@ class Item(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     item_data = Column(JSONB)
-    embedding = Column(ARRAY(Float(precision=6)))  # Array of floats
+    embedding = Column(ARRAY(Float(precision=6)))         # OpenAI embeddings
+    embedding_ollama = Column(ARRAY(Float(precision=6)))  # Ollama embeddings

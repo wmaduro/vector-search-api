@@ -5,6 +5,7 @@ from typing import List
 from database import get_db
 import schemas
 import openai
+import ollama
 
 
 app = FastAPI(title="Vector Search API")
@@ -17,6 +18,12 @@ def get_embedding(text: str) -> List[float]:
     return response.data[0].embedding
 
 
+def get_embedding_ollama(text: str) -> List[float]:
+    """Generate embedding using Ollama API."""
+    response = ollama.embed(model="nomic-embed-text", input=text)
+    return response["embeddings"][0]
+
+
 @app.post("/search/", response_model=List[schemas.ItemResponse])
 async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)):
     """Search for similar items using vector similarity"""
@@ -26,7 +33,8 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
 
         # Perform vector similarity search
         results = db.execute(
-            text("""
+            text(
+                """
                 SELECT
                     id,
                     name,
@@ -35,11 +43,46 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
                 FROM items
                 ORDER BY embedding <=> cast(:embedding as vector)
                 LIMIT :limit
-            """),
-            {
-                "embedding": query_embedding,
-                "limit": query.limit
-            }
+                """
+            ),
+            {"embedding": query_embedding, "limit": query.limit},
+        )
+
+        return [
+            schemas.ItemResponse(
+                id=row.id,
+                name=row.name,
+                item_data=row.item_data,
+                similarity=row.similarity,
+            )
+            for row in results
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/search_ollama/", response_model=List[schemas.ItemResponse])
+async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)):
+    """Search for similar items using vector similarity"""
+    try:
+        # Generate embedding for search query
+        query_embedding = get_embedding_ollama(query.query)
+
+        # Perform vector similarity search
+        results = db.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    name,
+                    item_data,
+                    embedding_ollama <=> cast(:embedding as vector) as similarity
+                FROM items
+                ORDER BY embedding_ollama <=> cast(:embedding as vector)
+                LIMIT :limit
+                """
+            ),
+            {"embedding": query_embedding, "limit": query.limit},
         )
 
         return [
