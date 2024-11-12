@@ -27,7 +27,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OLLAMA_HOST=http://ollama-service:11434
+      - OLLAMA_HOST=ollama
     depends_on:
       - db
       - ollama
@@ -42,7 +42,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/example_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OLLAMA_HOST=http://ollama-service:11434
+      - OLLAMA_HOST=ollama
     volumes:
       - ./api:/app
     depends_on:

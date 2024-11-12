@@ -5,13 +5,9 @@ import psycopg
 import openai
 import ollama
 from time import sleep
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Initialize OpenAI client
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = openai.OpenAI()
 
 
 def setup_model(model_name: str = "nomic-embed-text"):
@@ -41,9 +37,7 @@ def get_embedding(text: str):
 def get_embedding_ollama(text: str):
     """Generate embedding using Ollama API."""
     response = ollama.embed(model="nomic-embed-text", input=text)
-    embeddings = response["embeddings"][0]
-    vector_str = f"[{','.join(map(str, embeddings))}]"
-    return vector_str
+    return response["embeddings"][0]
 
 
 def fetch_books():
