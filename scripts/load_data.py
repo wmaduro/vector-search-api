@@ -2,12 +2,12 @@ import os
 import json
 import requests
 import psycopg
-import openai
+# import openai
 import ollama
 from time import sleep
 
 # Initialize OpenAI client
-client = openai.OpenAI()
+# client = openai.OpenAI()
 
 
 def setup_model(model_name: str = "nomic-embed-text"):
@@ -28,10 +28,10 @@ def setup_model(model_name: str = "nomic-embed-text"):
             return False
 
 
-def get_embedding(text: str):
-    """Generate embedding using OpenAI API."""
-    response = client.embeddings.create(model="text-embedding-3-small", input=text)
-    return response.data[0].embedding
+# def get_embedding(text: str):
+#     """Generate embedding using OpenAI API."""
+#     response = client.embeddings.create(model="text-embedding-3-small", input=text)
+#     return response.data[0].embedding
 
 
 def get_embedding_ollama(text: str):
@@ -106,15 +106,15 @@ def load_books_to_db():
 
         # Generate embedding
         # embedding = "[" + ",".join(["0"] * 1536) + "]"        # Placeholder embedding
-        embedding = get_embedding(description)                # OpenAI
+        # embedding = get_embedding(description)                # OpenAI
         embedding_ollama = get_embedding_ollama(description)  # Ollama
 
         cur.execute(
             """
-            INSERT INTO items (name, item_data, embedding, embedding_ollama)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO items (name, item_data, embedding_ollama)
+            VALUES (%s, %s, %s)
             """,
-            (book["title"], json.dumps(book), embedding, embedding_ollama),
+            (book["title"], json.dumps(book),  embedding_ollama),
         )
 
     # Commit and close
