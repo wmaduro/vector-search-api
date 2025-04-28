@@ -1,0 +1,17 @@
+
+Book titled 'Dynamic HTML' by Danny Goodman. First Published in 1998. This is a book about nt.
+Book titled 'Web Development and Design Foundations with XHTML' by Terry Felke-Morris. ed in 2008. This is a book about web_development.
+Book titled 'Digital rights management' by Bill Rosenblatt, Bill Trippe, Stephen Mooney. ed in 2001. This is a book about web_development.
+Book titled 'HTML5' by Mark Pilgrim. First Published in 2010. This is a book about nt.
+Book titled 'HTML' by Eric Kramer, Ruth Maran. First Published in 2000. This is a book elopment.
+Book titled 'Design of Web APIs' by Arnaud Lauret. First Published in 2019. This is a book elopment.
+Book titled 'REST in Practice' by Jim Webber. First Published in 2010. This is a book elopment.
+Book titled 'Small Business Management for Online Business - Web Development, Internet cial Networks' by Nicolae Sfetcu. First Published in 2014. This is a book about nt.
+Book titled 'Web Design & Development' by Nicolae Sfetcu. First Published in 2006. This is web_development.
+Book titled 'Title' by . First Published in None. This is a book about web_development.
+
+
+
+{"query": "list all books that was first published in 2019 ", "limit": 3}
+
+{"query": "list all books about rest", "limit": 3}

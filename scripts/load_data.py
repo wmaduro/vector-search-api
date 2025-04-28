@@ -31,11 +31,15 @@ def setup_model(model_name: str = "nomic-embed-text"):
             return False
 
 
-def get_embedding(text: str):
+def get_embedding_openai_small(text: str):
     """Generate embedding using OpenAI API."""
     response = client.embeddings.create(model="text-embedding-3-small", input=text)
     return response.data[0].embedding
 
+def get_embedding_openai_large(text: str):
+    """Generate embedding using OpenAI API."""
+    response = client.embeddings.create(model="text-embedding-3-large", input=text)
+    return response.data[0].embedding
 
 def get_embedding_ollama(text: str):
     """Generate embedding using Ollama API."""
@@ -46,11 +50,11 @@ def get_embedding_ollama(text: str):
 def fetch_books():
     """Fetch books across various subjects from Open Library."""
     categories = [
-        "programming",
+        # "programming",
         "web_development",
-        "artificial_intelligence",
-        "computer_science",
-        "software_engineering",
+        # "artificial_intelligence",
+        # "computer_science",
+        # "software_engineering",
     ]
     all_books = []
 
@@ -114,23 +118,36 @@ def load_books_to_db():
     books = fetch_books()
 
     for book in books:
+        # Check if the book already exists in the database
+        cur.execute("SELECT 1 FROM items WHERE name = %s", (book["title"],))
+        if cur.fetchone():
+            print(f"Book '{book['title']}' already exists in the database. Skipping.")
+            continue
+
         description = (
-            f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
-            f"Published in {book['first_publish_year']}. "
-            f"This is a book about {book['subject']}."
+            # f"This is a book about {book['subject']}."
+            f"First Published in {book['first_publish_year']}. "            
+            # f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
         )
 
+        print(f"description: {description}")
+
         # Generate embedding
-        embedding = get_embedding(description)                # OpenAI
+        embedding_openai_small = get_embedding_openai_small(description)                # OpenAI
+        print(f"openai embedding small: {len(embedding_openai_small)}")
+
+        embedding_openai_large = get_embedding_openai_large(description)                # OpenAI
+        print(f"openai embedding large: {len(embedding_openai_large)}")
         
         embedding_ollama = get_embedding_ollama(description)  # Ollama
+        print(f"ollama embedding: {len(embedding_ollama)}")
 
         cur.execute(
             """
-            INSERT INTO items (name, item_data, embedding, embedding_ollama)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO items (name, item_data, embedding_openai_small, embedding_openai_large, embedding_ollama)
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (book["title"], json.dumps(book), embedding, embedding_ollama),
+            (book["title"], json.dumps(book), embedding_openai_small, embedding_openai_large, embedding_ollama),
         )
 
     # Commit and close
