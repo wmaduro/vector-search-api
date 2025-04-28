@@ -20,36 +20,36 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
-  data_loader:
-    container_name: data-loader
-    build:
-      context: .
-      dockerfile: scripts/Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OLLAMA_HOST=ollama
-    depends_on:
-      - db
-      - ollama
-    command: python load_data.py
+  # data_loader:
+  #   container_name: data-loader
+  #   build:
+  #     context: .
+  #     dockerfile: scripts/Dockerfile
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:password@db:5432/example_db
+  #     # - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - OLLAMA_HOST=ollama
+  #   depends_on:
+  #     - db
+  #     - ollama
+  #   command: python load_data.py
 
-  api:
-    container_name: my-api
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/example_db
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OLLAMA_HOST=ollama
-    volumes:
-      - ./api:/app
-    depends_on:
-      - db
-      - ollama
+  # api:
+  #   container_name: my-api
+  #   build:
+  #     context: .
+  #     dockerfile: api/Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql+psycopg://postgres:password@db:5432/example_db
+  #     # - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - OLLAMA_HOST=ollama
+  #   volumes:
+  #     - ./api:/app
+  #   depends_on:
+  #     - db
+  #     - ollama
 
 volumes:
   pgdata:

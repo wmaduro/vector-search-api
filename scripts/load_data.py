@@ -1,13 +1,16 @@
 import os
 import json
+import dotenv
 import requests
 import psycopg
-# import openai
+import openai
 import ollama
 from time import sleep
 
+dotenv.load_dotenv()
+
 # Initialize OpenAI client
-# client = openai.OpenAI()
+client = openai.OpenAI()
 
 
 def setup_model(model_name: str = "nomic-embed-text"):
@@ -28,10 +31,10 @@ def setup_model(model_name: str = "nomic-embed-text"):
             return False
 
 
-# def get_embedding(text: str):
-#     """Generate embedding using OpenAI API."""
-#     response = client.embeddings.create(model="text-embedding-3-small", input=text)
-#     return response.data[0].embedding
+def get_embedding(text: str):
+    """Generate embedding using OpenAI API."""
+    response = client.embeddings.create(model="text-embedding-3-small", input=text)
+    return response.data[0].embedding
 
 
 def get_embedding_ollama(text: str):
@@ -79,6 +82,19 @@ def fetch_books():
 
     return all_books
 
+def delete_all_books():
+    """Delete all entries from the items table."""
+    try:
+        conn = psycopg.connect("postgresql://postgres:password@localhost:5432/example_db")
+    
+        cur = conn.cursor()
+        cur.execute("DELETE FROM items")
+        conn.commit()
+        cur.close()
+        print("Successfully cleared the items table.")
+    except Exception as e:
+        print(f"Error clearing items table: {e}")
+        conn.rollback()
 
 def load_books_to_db():
     """Load books with embeddings into PostgreSQL."""
@@ -91,7 +107,7 @@ def load_books_to_db():
         exit(1)
 
     # Connect to the database
-    conn = psycopg.connect(os.getenv("DATABASE_URL"))
+    conn = psycopg.connect("postgresql://postgres:password@localhost:5432/example_db")
     cur = conn.cursor()
 
     # Fetch data from the Open Library
@@ -105,16 +121,16 @@ def load_books_to_db():
         )
 
         # Generate embedding
-        # embedding = "[" + ",".join(["0"] * 1536) + "]"        # Placeholder embedding
-        # embedding = get_embedding(description)                # OpenAI
+        embedding = get_embedding(description)                # OpenAI
+        
         embedding_ollama = get_embedding_ollama(description)  # Ollama
 
         cur.execute(
             """
-            INSERT INTO items (name, item_data, embedding_ollama)
-            VALUES (%s, %s, %s)
+            INSERT INTO items (name, item_data, embedding, embedding_ollama)
+            VALUES (%s, %s, %s, %s)
             """,
-            (book["title"], json.dumps(book),  embedding_ollama),
+            (book["title"], json.dumps(book), embedding, embedding_ollama),
         )
 
     # Commit and close
@@ -125,6 +141,7 @@ def load_books_to_db():
 
 if __name__ == "__main__":
     try:
+        delete_all_books()
         load_books_to_db()
         print("Successfully loaded sample books!")
     except Exception as e:

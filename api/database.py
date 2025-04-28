@@ -4,7 +4,8 @@ from sqlalchemy.ext.declarative import declarative_base
 import os
 
 # Database connection
-DATABASE_URL = os.getenv("DATABASE_URL")
+# DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "postgresql+psycopg://postgres:password@localhost:5432/example_db"
 
 # Create SQLAlchemy engine instance
 engine = create_engine(DATABASE_URL)
