@@ -79,10 +79,21 @@ def fetch_books():
             }
             all_books.append(book_data)
 
-        print(f"Successfully processed {len(books)} books for {category}")
+        # print(f"Successfully processed {len(books)} books for {category}")
 
     if not all_books:
         print("No books were fetched from any category.")
+
+    all_books_formatted = []
+    for book_data in all_books:
+        description = (
+            f"This is a book about {book_data['subject']}. "
+            f"First Published in {book_data['first_publish_year']}. "            
+            f"Book titled '{book_data['title']}' by {', '.join(book_data['authors'])}. "
+        )
+        all_books_formatted.append(description)
+
+    print(f"all_books_formatted: {all_books_formatted}")
 
     return all_books
 
@@ -158,8 +169,11 @@ def load_books_to_db():
 
 if __name__ == "__main__":
     try:
-        delete_all_books()
-        load_books_to_db()
+
+        fetch_books()
+
+        # delete_all_books()
+        # load_books_to_db()
         print("Successfully loaded sample books!")
     except Exception as e:
         print(f"Error loading books: {e}")
