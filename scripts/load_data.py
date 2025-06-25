@@ -47,7 +47,7 @@ def get_embedding_ollama(text: str):
     return response["embeddings"][0]
 
 
-def fetch_books():
+def fetch_books_json():
     """Fetch books across various subjects from Open Library."""
     categories = [
         # "programming",
@@ -97,6 +97,57 @@ def fetch_books():
 
     return all_books
 
+def fetch_books_plain_text():
+    """Fetch books across various subjects from Open Library."""
+    categories = [
+        # "programming",
+        "web_development",
+        # "artificial_intelligence",
+        # "computer_science",
+        # "software_engineering",
+    ]
+    all_books = []
+
+    for category in categories:
+        url = f"https://openlibrary.org/subjects/{category}.json?limit=10"
+        response = requests.get(url)
+        response.raise_for_status()  # Raises an error for a bad response
+
+        data = response.json()
+        books = data.get("works", [])
+
+        # Format each book
+        for book in books:
+            book_data = {
+                "title": book.get("title", "Untitled"),
+                "authors": [
+                    author.get("name", "Unknown Author")
+                    for author in book.get("authors", [])
+                ],
+                "first_publish_year": book.get("first_publish_year", "Unknown"),
+                "subject": category,
+            }
+            all_books.append(book_data)
+
+        # print(f"Successfully processed {len(books)} books for {category}")
+
+    if not all_books:
+        print("No books were fetched from any category.")
+
+    all_books_formatted = []
+    for book_data in all_books:
+        description = (
+            f"This is a book about {book_data['subject']}. "
+            f"First Published in {book_data['first_publish_year']}. "            
+            f"Book titled '{book_data['title']}' by {', '.join(book_data['authors'])}. "
+        )
+        all_books_formatted.append(description)
+
+    print(f"all_books_formatted: {all_books_formatted}")
+
+    return book_data
+
+
 def delete_all_books():
     """Delete all entries from the items table."""
     try:
@@ -111,7 +162,7 @@ def delete_all_books():
         print(f"Error clearing items table: {e}")
         conn.rollback()
 
-def load_books_to_db():
+def load_json_books_to_db():
     """Load books with embeddings into PostgreSQL."""
 
     # Wait for the database to be ready
@@ -126,7 +177,7 @@ def load_books_to_db():
     cur = conn.cursor()
 
     # Fetch data from the Open Library
-    books = fetch_books()
+    books = fetch_books_json()
 
     for book in books:
         # Check if the book already exists in the database
@@ -136,29 +187,37 @@ def load_books_to_db():
             continue
 
         description = (
-            # f"This is a book about {book['subject']}."
+            f"This is a book about {book['subject']}."
             f"First Published in {book['first_publish_year']}. "            
-            # f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
+            f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
         )
 
         print(f"description: {description}")
 
-        # Generate embedding
-        embedding_openai_small = get_embedding_openai_small(description)                # OpenAI
-        print(f"openai embedding small: {len(embedding_openai_small)}")
+        # # Generate embedding
+        # embedding_openai_small = get_embedding_openai_small(description)                # OpenAI
+        # print(f"openai embedding small: {len(embedding_openai_small)}")
 
-        embedding_openai_large = get_embedding_openai_large(description)                # OpenAI
-        print(f"openai embedding large: {len(embedding_openai_large)}")
+        # embedding_openai_large = get_embedding_openai_large(description)                # OpenAI
+        # print(f"openai embedding large: {len(embedding_openai_large)}")
         
         embedding_ollama = get_embedding_ollama(description)  # Ollama
         print(f"ollama embedding: {len(embedding_ollama)}")
 
+        # cur.execute(
+        #     """
+        #     INSERT INTO items (name, item_data, embedding_openai_small, embedding_openai_large, embedding_ollama)
+        #     VALUES (%s, %s, %s, %s, %s)
+        #     """,
+        #     (book["title"], json.dumps(book), embedding_openai_small, embedding_openai_large, embedding_ollama),
+        # )
+
         cur.execute(
             """
-            INSERT INTO items (name, item_data, embedding_openai_small, embedding_openai_large, embedding_ollama)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO items (name, item_data, embedding_ollama)
+            VALUES (%s, %s, %s)
             """,
-            (book["title"], json.dumps(book), embedding_openai_small, embedding_openai_large, embedding_ollama),
+            (book["title"], json.dumps(book), embedding_ollama),
         )
 
     # Commit and close
@@ -167,13 +226,73 @@ def load_books_to_db():
     conn.close()
 
 
+def load_plain_text_books_to_db():
+    """Load books with embeddings into PostgreSQL."""
+
+    # Wait for the database to be ready
+    sleep(5)
+
+    # Pull a embedding model from Ollama
+    if not setup_model():
+        exit(1)
+
+    # Connect to the database
+    conn = psycopg.connect("postgresql://postgres:password@localhost:5432/example_db")
+    cur = conn.cursor()
+
+    # Fetch data from the Open Library
+    books = fetch_books_json()
+
+    for book in books:
+        description = (
+            f"This is a book about {book['subject']}."
+            f"First Published in {book['first_publish_year']}. "            
+            f"Book titled '{book['title']}' by {', '.join(book['authors'])}. "
+        )
+
+        print(f"description: {description}")
+
+        # # Generate embedding
+        # embedding_openai_small = get_embedding_openai_small(description)                # OpenAI
+        # print(f"openai embedding small: {len(embedding_openai_small)}")
+
+        # embedding_openai_large = get_embedding_openai_large(description)                # OpenAI
+        # print(f"openai embedding large: {len(embedding_openai_large)}")
+        
+        embedding_ollama = get_embedding_ollama(description)  # Ollama
+        print(f"ollama embedding: {len(embedding_ollama)}")
+
+        # cur.execute(
+        #     """
+        #     INSERT INTO items (name, item_data, embedding_openai_small, embedding_openai_large, embedding_ollama)
+        #     VALUES (%s, %s, %s, %s, %s)
+        #     """,
+        #     (book["title"], json.dumps(book), embedding_openai_small, embedding_openai_large, embedding_ollama),
+        # )
+
+        cur.execute(
+            """
+            INSERT INTO items (name, item_data, embedding_ollama)
+            VALUES (%s, %s, %s)
+            """,
+            (book["title"], json.dumps(book), embedding_ollama),
+        )
+
+    # Commit and close
+    conn.commit()
+    cur.close()
+    conn.close()    
+
+
 if __name__ == "__main__":
     try:
 
-        fetch_books()
+        # fetch_books_json()
+        # fetch_books_plain_text()
 
-        # delete_all_books()
-        # load_books_to_db()
+        delete_all_books()
+        load_json_books_to_db()
+        # load_plain_text_books_to_db()        
         print("Successfully loaded sample books!")
     except Exception as e:
         print(f"Error loading books: {e}")

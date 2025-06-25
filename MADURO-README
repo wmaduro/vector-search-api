@@ -1,3 +1,8 @@
 cd /home/maduro/repo-ai/vector-search-api
 
 sudo docker compose down --rmi all --volumes ; sudo docker compose up -d
+
+
+to run the api:
+1 - execute run-api.sh
+2 - call swagger http://127.0.0.1:8000/docs

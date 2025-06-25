@@ -12,13 +12,13 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
-  ollama:
-    image: ollama/ollama
-    container_name: ollama-service
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: ollama-service
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
 
   # data_loader:
   #   container_name: data-loader

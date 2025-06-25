@@ -31,8 +31,8 @@ def get_embedding_large(text: str) -> List[float]:
 def get_embedding_ollama(text: str) -> List[float]:
     """Generate embedding using Ollama API."""
     response = ollama.embed(model="nomic-embed-text", input=text)
-    print(f'get_embedding_ollama -> text {len(text)}')
-    print(f'get_embedding_ollama -> text {response}')
+    # print(f'get_embedding_ollama -> text {len(text)}')
+    # print(f'get_embedding_ollama -> text {response}')
     return response["embeddings"][0]
 
 
@@ -64,7 +64,7 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
 
         # print(f'search -> query_embedding: {query_embedding} ')
        
-        return [
+        result = [
             schemas.ItemResponse(
                 id=row.id,
                 name=row.name,
@@ -73,6 +73,10 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
             )
             for row in results
         ]
+        print(f'search -> result: {result} ')
+
+        return result 
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -122,9 +126,9 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
     """Search for similar items using vector similarity"""
     try:
         # Generate embedding for search query
-        print(f'search_ollama -> query.query {len(query.query)}')
+        # print(f'search_ollama -> query.query {len(query.query)}')
         query_embedding = get_embedding_ollama(query.query)
-        print(f'search_ollama -> query_embedding: {len(query_embedding)} ')
+        # print(f'search_ollama -> query_embedding: {len(query_embedding)} ')
         
         # Perform vector similarity search
         results = db.execute(
@@ -142,9 +146,8 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
             ),
             {"embedding": query_embedding, "limit": query.limit},
         )
-
-        # print(f'search_ollama -> query_embedding: {query_embedding} ')
-        return [
+      
+        result = [
             schemas.ItemResponse(
                 id=row.id,
                 name=row.name,
@@ -153,6 +156,9 @@ async def search_items(query: schemas.SearchQuery, db: Session = Depends(get_db)
             )
             for row in results
         ]
+        print(f'search -> result: {result} ')
+
+        return result 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
